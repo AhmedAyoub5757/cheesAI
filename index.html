@@ -11,12 +11,29 @@
     <div class="game-container">
         <h1>Ludo-Checkers (Goti)</h1>
         
+        <!-- Updated Score and Turn Panel -->
         <div class="status-panel">
-            <span id="turn-indicator">Your Turn (White)</span>
-            <button id="reset-btn">Reset Game</button>
+            <div class="score-box">
+                <span class="dot white-dot"></span> White: <strong id="white-score">12</strong>
+            </div>
+            <div id="turn-indicator" class="turn-highlight">Your Turn</div>
+            <div class="score-box">
+                <span class="dot black-dot"></span> Black: <strong id="black-score">12</strong>
+            </div>
         </div>
 
         <div id="board" class="board"></div>
+        
+        <button id="reset-btn">Reset Game</button>
+    </div>
+
+    <!-- The Win/Loss Pop-up Modal -->
+    <div id="win-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2 id="win-title">Victory!</h2>
+            <p id="win-message">You have captured all enemy pieces.</p>
+            <button id="modal-reset-btn">Play Again</button>
+        </div>
     </div>
 
     <script src="script.js"></script>

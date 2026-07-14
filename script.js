@@ -1,9 +1,19 @@
 const boardElement = document.getElementById('board');
 const turnIndicator = document.getElementById('turn-indicator');
 const resetBtn = document.getElementById('reset-btn');
+const modalResetBtn = document.getElementById('modal-reset-btn');
+
+// Score elements
+const whiteScoreElem = document.getElementById('white-score');
+const blackScoreElem = document.getElementById('black-score');
+
+// Modal elements
+const winModal = document.getElementById('win-modal');
+const winTitle = document.getElementById('win-title');
+const winMessage = document.getElementById('win-message');
 
 // --- GAME CONFIGURATION ---
-const BOARD_SIZE = 10; 
+const BOARD_SIZE = 8; 
 const PIECE_ROWS = 3;  
 
 let gameState = {
@@ -14,18 +24,26 @@ let gameState = {
 };
 
 initGame();
+
 resetBtn.addEventListener('click', initGame);
+modalResetBtn.addEventListener('click', () => {
+    winModal.classList.remove('active');
+    initGame();
+});
 
 function initGame() {
     gameState.board = createInitialBoard();
     gameState.turn = 'white';
     gameState.selectedPiece = null;
     gameState.validMoves = [];
-    turnIndicator.textContent = "Your Turn (White)";
+    
+    turnIndicator.textContent = "Your Turn";
+    winModal.classList.remove('active');
     
     boardElement.style.gridTemplateColumns = `repeat(${BOARD_SIZE}, 1fr)`;
     boardElement.style.gridTemplateRows = `repeat(${BOARD_SIZE}, 1fr)`;
     
+    updateScoresAndDisplay();
     renderBoard();
 }
 
@@ -36,9 +54,9 @@ function createInitialBoard() {
         for (let c = 0; c < BOARD_SIZE; c++) {
             if ((r + c) % 2 === 1) {
                 if (r < PIECE_ROWS) {
-                    row.push(-1); // Black piece
+                    row.push(-1); 
                 } else if (r >= BOARD_SIZE - PIECE_ROWS) {
-                    row.push(1);  // White piece
+                    row.push(1);  
                 } else {
                     row.push(0);  
                 }
@@ -69,7 +87,6 @@ function renderBoard() {
                     const piece = document.createElement('div');
                     piece.classList.add('piece');
                     
-                    // Assign colors and King crowns
                     if (Math.abs(pieceValue) === 1) {
                         piece.classList.add(pieceValue > 0 ? 'white' : 'black');
                     } else if (Math.abs(pieceValue) === 2) {
@@ -104,7 +121,6 @@ function handleSquareClick(r, c) {
 
     const clickedValue = gameState.board[r][c];
 
-    // Select Player's own piece (positive numbers 1 and 2 are White)
     if (clickedValue > 0) {
         gameState.selectedPiece = { r, c };
         gameState.validMoves = getLegalMoves(r, c, gameState.board);
@@ -123,19 +139,17 @@ function handleSquareClick(r, c) {
     renderBoard();
 }
 
-// Check moves for any board state (helps AI evaluate options)
 function getLegalMoves(r, c, board) {
     const moves = [];
     const piece = board[r][c];
     if (piece === 0 || piece === null) return [];
 
     const isKing = Math.abs(piece) === 2;
-    // Standard direction: White goes up (-1), Black goes down (+1)
     const directions = [];
-    if (piece > 0) { // White
+    if (piece > 0) { 
         directions.push(-1);
-        if (isKing) directions.push(1); // Kings also move backward
-    } else { // Black
+        if (isKing) directions.push(1); 
+    } else { 
         directions.push(1);
         if (isKing) directions.push(-1); 
     }
@@ -151,7 +165,6 @@ function getLegalMoves(r, c, board) {
                 if (adjacentSpace === 0) {
                     moves.push({ r: targetRow, c: targetCol, isJump: false });
                 } 
-                // Opponent checker found? (different sign)
                 else if (adjacentSpace !== null && (adjacentSpace * piece < 0)) {
                     const jumpRow = targetRow + dir;
                     const jumpCol = targetCol + (targetCol - c);
@@ -177,12 +190,8 @@ function getLegalMoves(r, c, board) {
 function executeMove(from, to) {
     let piece = gameState.board[from.r][from.c];
     
-    // King Promotion check
-    if (piece === 1 && to.r === 0) {
-        piece = 2; // White crowned
-    } else if (piece === -1 && to.r === BOARD_SIZE - 1) {
-        piece = -2; // Black crowned
-    }
+    if (piece === 1 && to.r === 0) piece = 2; 
+    if (piece === -1 && to.r === BOARD_SIZE - 1) piece = -2; 
 
     gameState.board[to.r][to.c] = piece;
     gameState.board[from.r][from.c] = 0;
@@ -194,100 +203,115 @@ function executeMove(from, to) {
     gameState.selectedPiece = null;
     gameState.validMoves = [];
     
-    // Check win condition
     if (checkGameOver()) return;
 
     gameState.turn = 'black';
-    turnIndicator.textContent = "AI is thinking...";
+    turnIndicator.textContent = "AI Thinking...";
+    updateScoresAndDisplay();
     renderBoard();
 
     setTimeout(makeAIMove, 800);
 }
 
-// Tactical AI Logic
 function makeAIMove() {
     let jumpMoves = [];
     let normalMoves = [];
 
-    // Find all possible AI moves
     for (let r = 0; r < BOARD_SIZE; r++) {
         for (let c = 0; c < BOARD_SIZE; c++) {
-            if (gameState.board[r][c] < 0) { // Black piece
+            if (gameState.board[r][c] < 0) { 
                 const moves = getLegalMoves(r, c, gameState.board);
                 moves.forEach(m => {
                     const moveDetails = { from: { r, c }, to: m };
-                    if (m.isJump) {
-                        jumpMoves.push(moveDetails);
-                    } else {
-                        normalMoves.push(moveDetails);
-                    }
+                    if (m.isJump) jumpMoves.push(moveDetails);
+                    else normalMoves.push(moveDetails);
                 });
             }
         }
     }
 
-    // AI Turn Decisions
     let chosenMove = null;
     if (jumpMoves.length > 0) {
-        // 1. Force/Prioritize capturing the player's piece!
         chosenMove = jumpMoves[Math.floor(Math.random() * jumpMoves.length)];
     } else if (normalMoves.length > 0) {
-        // 2. Otherwise, make a random safe move
         chosenMove = normalMoves[Math.floor(Math.random() * normalMoves.length)];
     }
 
     if (chosenMove) {
-        executeAIMove(chosenMove.from, chosenMove.to);
+        let piece = gameState.board[chosenMove.from.r][chosenMove.from.c];
+        if (piece === -1 && chosenMove.to.r === BOARD_SIZE - 1) piece = -2; 
+
+        gameState.board[chosenMove.to.r][chosenMove.to.c] = piece;
+        gameState.board[chosenMove.from.r][chosenMove.from.c] = 0;
+
+        if (chosenMove.to.isJump && chosenMove.to.captured) {
+            gameState.board[chosenMove.to.captured.r][chosenMove.to.captured.c] = 0;
+        }
+
+        if (checkGameOver()) return;
+
+        gameState.turn = 'white';
+        turnIndicator.textContent = "Your Turn";
+        updateScoresAndDisplay();
+        renderBoard();
     } else {
-        // AI has no moves left
-        announceWinner("You Win! AI is blocked.");
+        announceWinner("white", "AI is out of options. Splendid game!");
     }
 }
 
-function executeAIMove(from, to) {
-    let piece = gameState.board[from.r][from.c];
-    
-    if (piece === -1 && to.r === BOARD_SIZE - 1) {
-        piece = -2; // Promoted to AI King
-    }
-
-    gameState.board[to.r][to.c] = piece;
-    gameState.board[from.r][from.c] = 0;
-
-    if (to.isJump && to.captured) {
-        gameState.board[to.captured.r][to.captured.c] = 0;
-    }
-
-    if (checkGameOver()) return;
-
-    gameState.turn = 'white';
-    turnIndicator.textContent = "Your Turn (White)";
-    renderBoard();
-}
-
-function checkGameOver() {
-    let whiteCount = 0;
-    let blackCount = 0;
+// Scans board to calculate live piece counts and handles live headers
+function updateScoresAndDisplay() {
+    let white = 0;
+    let black = 0;
 
     for (let r = 0; r < BOARD_SIZE; r++) {
         for (let c = 0; c < BOARD_SIZE; c++) {
-            if (gameState.board[r][c] > 0) whiteCount++;
-            if (gameState.board[r][c] < 0) blackCount++;
+            if (gameState.board[r][c] > 0) white++;
+            if (gameState.board[r][c] < 0) black++;
         }
     }
 
-    if (whiteCount === 0) {
-        announceWinner("AI (Black) Wins!");
+    whiteScoreElem.textContent = white;
+    blackScoreElem.textContent = black;
+}
+
+function checkGameOver() {
+    let white = 0;
+    let black = 0;
+
+    for (let r = 0; r < BOARD_SIZE; r++) {
+        for (let c = 0; c < BOARD_SIZE; c++) {
+            if (gameState.board[r][c] > 0) white++;
+            if (gameState.board[r][c] < 0) black++;
+        }
+    }
+
+    if (white === 0) {
+        announceWinner("black", "The AI cleared your tokens. Better luck next time!");
         return true;
     }
-    if (blackCount === 0) {
-        announceWinner("You (White) Win!");
+    if (black === 0) {
+        announceWinner("white", "You captured all enemy tokens cleanly!");
         return true;
     }
     return false;
 }
 
-function announceWinner(msg) {
-    turnIndicator.textContent = msg;
+// Opens up the beautiful Win Overlay window
+function announceWinner(winner, message) {
     gameState.turn = 'gameover';
+    updateScoresAndDisplay();
+    renderBoard();
+
+    if (winner === 'white') {
+        winTitle.textContent = "🏆 Victory!";
+        winTitle.style.color = "#2ecc71";
+        winMessage.textContent = message;
+    } else {
+        winTitle.textContent = "💥 Game Over";
+        winTitle.style.color = "#e74c3c";
+        winMessage.textContent = message;
+    }
+
+    winModal.classList.add('active');
 }
