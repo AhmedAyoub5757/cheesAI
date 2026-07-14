@@ -1,0 +1,146 @@
+:root {
+    --light-square: #f0d9b5;
+    --dark-square: #b58863; /* Classic wooden tones */
+    --white-token: radial-gradient(circle at 30% 30%, #ffffff 0%, #dcdcdc 50%, #aaaaaa 100%);
+    --black-token: radial-gradient(circle at 30% 30%, #4a4a4a 0%, #202020 60%, #000000 100%);
+}
+
+body {
+    background-color: #1e1e1e;
+    color: #fff;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+}
+
+.game-container {
+    text-align: center;
+    max-width: 600px;
+    width: 90%;
+}
+
+h1 {
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.status-panel {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #2a2a2a;
+    padding: 10px 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 1.1rem;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+#reset-btn {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.2s;
+}
+
+#reset-btn:hover {
+    background-color: #c0392b;
+}
+
+/* The Board Grid */
+.board {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border: 10px solid #5c3a21; /* Thick wooden frame */
+    border-radius: 4px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    box-sizing: border-box;
+}
+
+.square {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    cursor: pointer;
+}
+
+.light {
+    background-color: var(--light-square);
+}
+
+.dark {
+    background-color: var(--dark-square);
+}
+
+/* Tokens / Goti Styling */
+.piece {
+    width: 80%;
+    height: 80%;
+    border-radius: 50%;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.4), inset 0 -3px 5px rgba(0,0,0,0.4);
+    position: relative;
+    transition: transform 0.2s ease;
+    z-index: 2;
+}
+
+.piece.white {
+    background: var(--white-token);
+}
+
+.piece.black {
+    background: var(--black-token);
+    border: 1px solid #111;
+}
+
+/* Indicator rings inside Ludo tokens */
+.piece::after {
+    content: '';
+    position: absolute;
+    top: 15%;
+    left: 15%;
+    width: 70%;
+    height: 70%;
+    border: 2px rgba(255, 255, 255, 0.2) solid;
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+/* Highlight Selected and Move Hints */
+.piece.selected {
+    transform: scale(1.1);
+    box-shadow: 0 0 12px #f1c40f, 0 4px 6px rgba(0,0,0,0.4);
+}
+
+.square.highlight::before {
+    content: '';
+    width: 30%;
+    height: 30%;
+    background-color: rgba(46, 204, 113, 0.7);
+    border-radius: 50%;
+    position: absolute;
+    z-index: 1;
+}
+
+/* Styling for King pieces */
+.piece.king::before {
+    content: '👑';
+    font-size: 1.2rem;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #f1c40f;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+    z-index: 3;
+}
